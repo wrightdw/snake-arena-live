@@ -29,6 +29,13 @@ import {
 const getApiBaseUrl = (): string => {
   // Check if we have an environment variable set at build time
   const envApiUrl = import.meta.env.VITE_API_URL;
+  
+  // If VITE_API_URL is set to /api, we're using nginx proxy (unified deployment)
+  if (envApiUrl === '/api') {
+    return '/api';
+  }
+  
+  // If another environment URL is set, use it
   if (envApiUrl && envApiUrl !== 'http://localhost:8000') {
     return envApiUrl;
   }

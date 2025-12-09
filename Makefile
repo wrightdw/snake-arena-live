@@ -99,3 +99,25 @@ prod: ## Start production environment
 
 prod-build: ## Build and start production environment
 	docker-compose -f docker-compose.yml -f docker-compose.prod.yml up --build -d
+
+# Unified deployment (single container for frontend + backend)
+unified-build: ## Build unified container (frontend + backend in one)
+	docker-compose -f docker-compose.unified.yml build
+
+unified-up: ## Start unified deployment
+	docker-compose -f docker-compose.unified.yml up -d
+
+unified-down: ## Stop unified deployment
+	docker-compose -f docker-compose.unified.yml down
+
+unified-logs: ## View logs from unified deployment
+	docker-compose -f docker-compose.unified.yml logs -f
+
+unified-rebuild: ## Rebuild and restart unified deployment
+	docker-compose -f docker-compose.unified.yml up --build -d
+
+unified-status: ## Check status of unified deployment
+	docker-compose -f docker-compose.unified.yml ps
+	@echo "\nSupervisor status:"
+	@docker exec snake-arena-app supervisorctl status || echo "Container not running"
+

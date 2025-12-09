@@ -1,0 +1,60 @@
+services:
+  # PostgreSQL database
+  postgres:
+    image: postgres:16-alpine
+    container_name: snake-arena-db
+    environment:
+      POSTGRES_DB: snake_arena
+      POSTGRES_USER: snake_admin
+      POSTGRES_PASSWORD: snake_secret_pass
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U snake_admin -d snake_arena"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - snake-network
+
+  # Unified app (frontend + backend in one container)
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.unified
+      args:
+        VITE_API_URL: /api
+    container_name: snake-arena-app
+    ports:
+      - "80:80"
+    environment:
+      # Database configuration
+      DATABASE_URL: postgresql://snake_admin:snake_secret_pass@postgres:5432/snake_arena
+      
+      # Backend configuration
+      SECRET_KEY: ${SECRET_KEY:-your-secret-key-change-in-production}
+      ALGORITHM: HS256
+      ACCESS_TOKEN_EXPIRE_MINUTES: 30
+      
+      # Use PostgreSQL in production
+      USE_SQLITE: "false"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - snake-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:80/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  snake-network:
+    driver: bridge

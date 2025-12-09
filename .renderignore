@@ -1,0 +1,58 @@
+# Files to ignore during Render deployment
+
+# Git
+.git/
+.gitignore
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Node
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Local development
+.env
+.env.local
+*.local
+
+# Docker development files (not needed on Render)
+docker-compose.yml
+docker-compose.unified.yml
+docker-compose.prod.yml
+
+# Documentation
+*.md
+!README.md
+
+# Tests
+frontend/src/test/
+backend/tests/
+backend/tests_integration/
+
+# Scripts
+scripts/

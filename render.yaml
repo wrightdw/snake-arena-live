@@ -1,0 +1,53 @@
+# Render Blueprint for Snake Arena
+# This file defines all services needed for deployment
+
+services:
+  # Main application (unified frontend + backend)
+  - type: web
+    name: snake-arena-app
+    runtime: docker
+    dockerfilePath: ./Dockerfile.unified
+    dockerContext: .
+    plan: starter  # $7/month - change to 'standard' ($25/month) for more resources
+    region: oregon  # or: ohio, frankfurt, singapore
+    branch: main
+    
+    # Health check
+    healthCheckPath: /health
+    
+    # Environment variables
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: snake-arena-db
+          property: connectionString
+      
+      - key: SECRET_KEY
+        generateValue: true  # Auto-generates secure secret
+      
+      - key: ALGORITHM
+        value: HS256
+      
+      - key: ACCESS_TOKEN_EXPIRE_MINUTES
+        value: 30
+      
+      - key: USE_SQLITE
+        value: false
+      
+      # Frontend build args (passed to Docker)
+      - key: VITE_API_URL
+        value: /api
+    
+    # Auto-deploy on git push
+    autoDeploy: true
+
+databases:
+  # PostgreSQL database
+  - name: snake-arena-db
+    databaseName: snake_arena
+    user: snake_admin
+    plan: starter  # Free tier available, or $7/month for Starter
+    region: oregon  # Must match web service region
+    
+    # Database version
+    ipAllowList: []  # Empty means allow connections from Render services only
