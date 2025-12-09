@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/hooks/useAuth';
+import { useToast } from '@/hooks/use-toast';
 import { UserPlus, Loader2, AlertCircle } from 'lucide-react';
 
 interface SignupFormProps {
@@ -12,6 +13,7 @@ interface SignupFormProps {
 
 export const SignupForm: React.FC<SignupFormProps> = ({ onSuccess, onSwitchToLogin }) => {
   const { signup, isLoading } = useAuth();
+  const { toast } = useToast();
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -40,9 +42,36 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSuccess, onSwitchToLog
     const result = await signup({ username, email, password });
     
     if (result.success) {
+      toast({
+        title: "Account created!",
+        description: `Welcome, ${username}! You're now logged in.`,
+      });
       onSuccess?.();
     } else {
-      setError(result.error || 'Signup failed');
+      // Parse and format the error message
+      let errorMsg = result.error || 'Signup failed';
+      let toastTitle = "Signup failed";
+      
+      // Provide user-friendly messages for common errors
+      if (errorMsg.toLowerCase().includes('email already registered')) {
+        toastTitle = "Email already in use";
+        errorMsg = "This email is already registered. Please use a different email or try logging in.";
+      } else if (errorMsg.toLowerCase().includes('username already exists')) {
+        toastTitle = "Username taken";
+        errorMsg = "This username is already taken. Please choose a different username.";
+      } else if (errorMsg.toLowerCase().includes('invalid email')) {
+        toastTitle = "Invalid email";
+        errorMsg = "Please enter a valid email address.";
+      } else if (errorMsg.toLowerCase().includes('password')) {
+        toastTitle = "Password issue";
+      }
+      
+      setError(errorMsg);
+      toast({
+        title: toastTitle,
+        description: errorMsg,
+        variant: "destructive",
+      });
     }
   };
 

@@ -25,8 +25,37 @@ import {
 } from '@/types/game';
 
 // Configuration
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+// In Codespaces/Cloud environments, dynamically determine API URL
+const getApiBaseUrl = (): string => {
+  // Check if we have an environment variable set at build time
+  const envApiUrl = import.meta.env.VITE_API_URL;
+  if (envApiUrl && envApiUrl !== 'http://localhost:8000') {
+    return envApiUrl;
+  }
+  
+  // For Codespaces/Cloud: Replace frontend port with 8000 (backend port) in current origin
+  if (typeof window !== 'undefined') {
+    const currentUrl = window.location.origin;
+    // If we're on a forwarded port URL (contains port number or github.dev)
+    if (currentUrl.includes('github.dev') || currentUrl.includes('-5173.') || currentUrl.includes('-3000.')) {
+      // Replace -5173 or -3000 with -8000 for Codespaces backend
+      return currentUrl.replace('-5173.', '-8000.').replace('-3000.', '-8000.');
+    }
+    // If running on localhost:5173 or localhost:3000, connect to localhost:8000
+    if (currentUrl.includes('localhost:5173') || currentUrl.includes('localhost:3000')) {
+      return 'http://localhost:8000';
+    }
+  }
+  
+  // Default fallback
+  return 'http://localhost:8000';
+};
+
+const API_BASE_URL = getApiBaseUrl();
 const API_TIMEOUT = 10000; // 10 seconds
+
+// Debug: Log the API URL being used
+console.log('[BackendAPI] Using API Base URL:', API_BASE_URL);
 
 // Token storage
 const TOKEN_KEY = 'auth_token';
@@ -82,6 +111,9 @@ async function request<T>(
   options: RequestInit = {}
 ): Promise<ApiResponse<T>> {
   const url = `${API_BASE_URL}${endpoint}`;
+  
+  console.log(`[BackendAPI] Making request to: ${url}`);
+  
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     ...options.headers as Record<string, string>,
@@ -104,21 +136,26 @@ async function request<T>(
     });
 
     clearTimeout(timeoutId);
+    
+    console.log(`[BackendAPI] Response status: ${response.status} ${response.statusText}`);
 
     // Handle non-JSON responses
     const contentType = response.headers.get('content-type');
     const isJson = contentType?.includes('application/json');
 
     if (!isJson) {
-      throw new Error(`Expected JSON response, got ${contentType || 'unknown'}`);
+      const errorMsg = `Expected JSON response, got ${contentType || 'unknown'}`;
+      console.error(`[BackendAPI] Error:`, errorMsg);
+      throw new Error(errorMsg);
     }
 
     const data = await response.json();
 
     // Backend returns ApiResponse format
     if (!response.ok) {
-      // For error responses, backend includes error message
-      const errorMessage = data.error || `HTTP ${response.status}`;
+      // For error responses, backend includes error message in 'detail' or 'error' field
+      const errorMessage = data.detail || data.error || data.message || `HTTP ${response.status}`;
+      console.error(`[BackendAPI] Request failed:`, errorMessage, data);
       return {
         success: false,
         data: null,
@@ -127,8 +164,10 @@ async function request<T>(
     }
 
     // Success response
+    console.log(`[BackendAPI] Request successful:`, data);
     return data as ApiResponse<T>;
   } catch (error) {
+    console.error(`[BackendAPI] Request error:`, error);
     if (error instanceof Error) {
       if (error.name === 'AbortError') {
         return {

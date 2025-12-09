@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
-import { api } from '@/api/mockApi';
+import { api } from '@/api/backendApi';
 import { LivePlayer } from '@/types/game';
 import { GameCanvas } from '@/components/game/GameCanvas';
 import { Button } from '@/components/ui/button';

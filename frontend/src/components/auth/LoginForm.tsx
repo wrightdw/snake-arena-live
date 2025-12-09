@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/hooks/useAuth';
+import { useToast } from '@/hooks/use-toast';
 import { LogIn, Loader2, AlertCircle } from 'lucide-react';
 
 interface LoginFormProps {
@@ -12,6 +13,7 @@ interface LoginFormProps {
 
 export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onSwitchToSignup }) => {
   const { login, isLoading } = useAuth();
+  const { toast } = useToast();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -23,9 +25,34 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onSwitchToSignu
     const result = await login({ email, password });
     
     if (result.success) {
+      toast({
+        title: "Welcome back!",
+        description: "You've successfully logged in.",
+      });
       onSuccess?.();
     } else {
-      setError(result.error || 'Login failed');
+      // Parse and format the error message
+      let errorMsg = result.error || 'Login failed';
+      let toastTitle = "Login failed";
+      
+      // Provide user-friendly messages for common errors
+      if (errorMsg.toLowerCase().includes('invalid email or password')) {
+        toastTitle = "Invalid credentials";
+        errorMsg = "The email or password you entered is incorrect. Please try again.";
+      } else if (errorMsg.toLowerCase().includes('user not found')) {
+        toastTitle = "Account not found";
+        errorMsg = "No account found with this email. Please check your email or sign up.";
+      } else if (errorMsg.toLowerCase().includes('invalid token')) {
+        toastTitle = "Session expired";
+        errorMsg = "Your session has expired. Please log in again.";
+      }
+      
+      setError(errorMsg);
+      toast({
+        title: toastTitle,
+        description: errorMsg,
+        variant: "destructive",
+      });
     }
   };
 

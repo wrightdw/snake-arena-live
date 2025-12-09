@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { api } from '@/api/mockApi';
+import { api } from '@/api/backendApi';
 import { AuthState, LoginCredentials, SignupCredentials, User } from '@/types/game';
 
 export const useAuth = () => {

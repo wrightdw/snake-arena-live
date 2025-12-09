@@ -35,7 +35,7 @@ else:
         pool_size=10,
         max_overflow=20,
         pool_pre_ping=True,
-        echo=False  # Set to True for SQL debugging
+        echo=True  # Enable SQL logging for debugging
     )
 
 # Create session factory

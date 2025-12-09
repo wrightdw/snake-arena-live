@@ -38,25 +38,30 @@ class Database:
 
     def create_user(self, username: str, email: str, password: str) -> dict:
         """Create a new user."""
-        # Check if email already exists
-        if self.get_user_by_email(email):
-            raise ValueError("Email already registered")
-        
-        # Check if username already exists
-        if self.get_user_by_username(username):
-            raise ValueError("Username already taken")
+        try:
+            # Check if email already exists
+            if self.get_user_by_email(email):
+                raise ValueError("Email already registered")
+            
+            # Check if username already exists
+            if self.get_user_by_username(username):
+                raise ValueError("Username already taken")
 
-        user = UserModel(
-            id=str(uuid.uuid4()),
-            username=username,
-            email=email,
-            password_hash=hash_password(password),
-            created_at=datetime.utcnow()
-        )
-        self.db.add(user)
-        self.db.commit()
-        self.db.refresh(user)
-        return user.to_dict()
+            user = UserModel(
+                id=str(uuid.uuid4()),
+                username=username,
+                email=email,
+                password_hash=hash_password(password),
+                created_at=datetime.utcnow()
+            )
+            self.db.add(user)
+            self.db.commit()
+            self.db.refresh(user)
+            
+            return user.to_dict()
+        except Exception as e:
+            self.db.rollback()
+            raise
 
     def verify_user_password(self, email: str, password: str) -> Optional[dict]:
         """Verify user password and return user if valid."""

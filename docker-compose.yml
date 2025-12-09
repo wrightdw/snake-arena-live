@@ -1,0 +1,66 @@
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: snake-arena-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-snakearena}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme123}
+      POSTGRES_DB: ${POSTGRES_DB:-snake_arena_db}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - snake-arena-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-snakearena} -d ${POSTGRES_DB:-snake_arena_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # FastAPI Backend
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: snake-arena-backend
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql://snakearena:changeme123@postgres:5432/snake_arena_db}
+      SECRET_KEY: ${SECRET_KEY:-dev-secret-key-change-in-production}
+      ENVIRONMENT: ${ENVIRONMENT:-development}
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - snake-arena-network
+    command: ["/bin/bash", "/app/entrypoint.sh", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+
+  # React Frontend with Nginx
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:8000}
+    container_name: snake-arena-frontend
+    ports:
+      - "5173:80"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      - backend
+    networks:
+      - snake-arena-network
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  snake-arena-network:
+    driver: bridge

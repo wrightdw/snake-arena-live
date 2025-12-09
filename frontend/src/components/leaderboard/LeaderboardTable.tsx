@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { api } from '@/api/mockApi';
+import { api } from '@/api/backendApi';
 import { LeaderboardEntry, GameMode } from '@/types/game';
 import { Button } from '@/components/ui/button';
 import { Trophy, Medal, Award, Loader2 } from 'lucide-react';

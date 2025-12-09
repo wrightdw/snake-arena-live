@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { api } from '@/api/mockApi';
+import { api } from '@/api/backendApi';
 import { LivePlayer } from '@/types/game';
 import { LivePlayerCard } from './LivePlayerCard';
 import { SpectatorView } from './SpectatorView';

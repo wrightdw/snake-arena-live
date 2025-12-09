@@ -61,7 +61,7 @@ async def login(credentials: LoginCredentials, db_session: Session = Depends(get
             "username": user["username"],
             "email": user["email"],
             "avatar": user.get("avatar"),
-            "created_at": user["created_at"],
+            "createdAt": user.get("createdAt"),
             "access_token": access_token,
             "token_type": "bearer",
         },
@@ -94,7 +94,7 @@ async def signup(credentials: SignupCredentials, db_session: Session = Depends(g
             "username": user["username"],
             "email": user["email"],
             "avatar": user.get("avatar"),
-            "created_at": user["created_at"],
+            "createdAt": user.get("createdAt"),
             "access_token": access_token,
             "token_type": "bearer",
         },
@@ -111,7 +111,7 @@ async def get_current_user_info(user: dict = Depends(get_current_user)):
             "username": user["username"],
             "email": user["email"],
             "avatar": user.get("avatar"),
-            "created_at": user["created_at"],
+            "createdAt": user.get("createdAt"),
         },
     )
 
