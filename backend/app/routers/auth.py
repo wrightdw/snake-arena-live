@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException, Depends, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from datetime import timedelta
+from sqlalchemy.orm import Session
 from ..schemas import (
     LoginCredentials,
     SignupCredentials,
@@ -8,7 +9,8 @@ from ..schemas import (
     ApiResponse,
     TokenResponse,
 )
-from ..database import db
+from ..db import get_db
+from ..database import get_database
 from ..security import (
     hash_password,
     verify_password,
@@ -21,13 +23,17 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 security = HTTPBearer()
 
 
-def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)) -> dict:
+def get_current_user(
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+    db_session: Session = Depends(get_db)
+) -> dict:
     """Get current user from token."""
     token = credentials.credentials
     user_id = verify_token(token)
     if not user_id:
         raise HTTPException(status_code=401, detail="Invalid token")
 
+    db = get_database(db_session)
     user = db.get_user_by_id(user_id)
     if not user:
         raise HTTPException(status_code=401, detail="User not found")
@@ -36,10 +42,11 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
 
 
 @router.post("/login", response_model=ApiResponse)
-async def login(credentials: LoginCredentials):
+async def login(credentials: LoginCredentials, db_session: Session = Depends(get_db)):
     """Login user and return access token."""
-    user = db.get_user_by_email(credentials.email)
-    if not user or not verify_password(credentials.password, user["password_hash"]):
+    db = get_database(db_session)
+    user = db.verify_user_password(credentials.email, credentials.password)
+    if not user:
         raise HTTPException(status_code=401, detail="Invalid email or password")
 
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
@@ -62,11 +69,10 @@ async def login(credentials: LoginCredentials):
 
 
 @router.post("/signup", response_model=ApiResponse)
-async def signup(credentials: SignupCredentials):
+async def signup(credentials: SignupCredentials, db_session: Session = Depends(get_db)):
     """Create new user account."""
-    if db.get_user_by_email(credentials.email):
-        raise HTTPException(status_code=400, detail="Email already registered")
-
+    db = get_database(db_session)
+    
     try:
         user = db.create_user(
             username=credentials.username,

@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .routers import auth, leaderboard, live
+from .db import init_db, seed_database
 
 app = FastAPI(
     title="Snake Arena Backend",
@@ -16,6 +17,15 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+# Startup event to initialize database
+@app.on_event("startup")
+async def startup_event():
+    """Initialize database on application startup."""
+    init_db()
+    seed_database()
+
 
 # Include routers
 app.include_router(auth.router)
