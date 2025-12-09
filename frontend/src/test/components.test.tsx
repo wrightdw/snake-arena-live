@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render } from '@testing-library/react';
-import { screen, fireEvent, waitFor } from '@testing-library/dom';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { LoginForm } from '@/components/auth/LoginForm';
 import { SignupForm } from '@/components/auth/SignupForm';
 import { ModeSelector } from '@/components/game/ModeSelector';
