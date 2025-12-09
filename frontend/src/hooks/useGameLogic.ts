@@ -81,9 +81,9 @@ export const moveSnake = (
     }
   }
 
-  // Check self collision (excluding tail since it will move)
-  const bodyWithoutTail = snake.slice(0, -1);
-  const selfCollision = bodyWithoutTail.some(
+  // Check self collision (excluding tail since it will move, and the segment right after head since it shifts away)
+  const bodyToCheck = snake.slice(2, -1);
+  const selfCollision = bodyToCheck.some(
     segment => segment.x === newHead.x && segment.y === newHead.y
   );
 
@@ -225,6 +225,12 @@ export const useGameLogic = (initialMode: GameMode = 'walls') => {
   // Keyboard controls
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't handle keyboard controls if user is typing in an input or textarea
+      const target = e.target as HTMLElement;
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') {
+        return;
+      }
+
       switch (e.key) {
         case 'ArrowUp':
         case 'w':

@@ -1,7 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { GameStatus, GameMode } from '@/types/game';
 import { Button } from '@/components/ui/button';
-import { Play, Pause, RotateCcw } from 'lucide-react';
+import { Play, Pause, RotateCcw, Loader2 } from 'lucide-react';
+import { api } from '@/api/backendApi';
+import { getToken } from '@/api/backendApi';
 
 interface GameOverlayProps {
   status: GameStatus;
@@ -22,6 +24,33 @@ export const GameOverlay: React.FC<GameOverlayProps> = ({
   onPause,
   onReset,
 }) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+
+  const handleSubmitScore = async () => {
+    if (!getToken()) {
+      setSubmitError('Please log in to submit your score');
+      return;
+    }
+
+    setIsSubmitting(true);
+    setSubmitError(null);
+
+    try {
+      const response = await api.leaderboard.submitScore(score, mode);
+      if (response.success) {
+        // Score submitted successfully
+        console.log('Score submitted:', response.data);
+      } else {
+        setSubmitError(response.error || 'Failed to submit score');
+      }
+    } catch (error) {
+      setSubmitError('Error submitting score');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   if (status === 'playing') return null;
 
   return (
@@ -76,6 +105,29 @@ export const GameOverlay: React.FC<GameOverlayProps> = ({
               )}
               <p className="text-muted-foreground">Best: {highScore}</p>
             </div>
+            
+            {getToken() && score > 0 && (
+              <Button 
+                variant="neon-cyan" 
+                size="lg" 
+                onClick={handleSubmitScore}
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                    Submitting...
+                  </>
+                ) : (
+                  'Submit Score'
+                )}
+              </Button>
+            )}
+            
+            {submitError && (
+              <p className="text-red-500 text-sm">{submitError}</p>
+            )}
+            
             <Button variant="neon-pink" size="xl" onClick={onReset}>
               <RotateCcw className="w-5 h-5 mr-2" />
               Play Again

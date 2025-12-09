@@ -34,7 +34,7 @@ const mockUsers: Map<string, User & { password: string }> = new Map([
   }],
 ]);
 
-const mockLeaderboard: LeaderboardEntry[] = [
+const getInitialLeaderboard = (): LeaderboardEntry[] => [
   { id: '1', rank: 1, username: 'NeonViper', score: 2450, mode: 'walls', date: '2024-12-07' },
   { id: '2', rank: 2, username: 'PixelMaster', score: 2100, mode: 'walls', date: '2024-12-06' },
   { id: '3', rank: 3, username: 'CyberSnake', score: 1890, mode: 'pass-through', date: '2024-12-05' },
@@ -46,6 +46,8 @@ const mockLeaderboard: LeaderboardEntry[] = [
   { id: '9', rank: 9, username: 'NightCrawler', score: 1100, mode: 'pass-through', date: '2024-11-29' },
   { id: '10', rank: 10, username: 'VectorKing', score: 980, mode: 'walls', date: '2024-11-28' },
 ];
+
+let mockLeaderboard: LeaderboardEntry[] = getInitialLeaderboard();
 
 // Helper to generate random snake position
 const generateRandomSnake = (gridSize: number): Position[] => {
@@ -283,4 +285,10 @@ export const api = {
   auth: authApi,
   leaderboard: leaderboardApi,
   livePlayers: livePlayersApi,
+};
+
+// Export reset function for testing
+export const resetMockApi = () => {
+  currentUser = null;
+  mockLeaderboard = getInitialLeaderboard();
 };

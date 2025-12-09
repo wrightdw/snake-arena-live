@@ -1,14 +1,29 @@
 import '@testing-library/jest-dom';
-import { vi } from 'vitest';
+import { vi, beforeEach } from 'vitest';
+import { resetMockApi } from '@/api/mockApi';
 
-// Mock localStorage
+// Mock localStorage with actual storage behavior
+let store: Record<string, string> = {};
 const localStorageMock = {
-  getItem: vi.fn(),
-  setItem: vi.fn(),
-  removeItem: vi.fn(),
-  clear: vi.fn(),
+  getItem: vi.fn((key: string) => store[key] || null),
+  setItem: vi.fn((key: string, value: string) => {
+    store[key] = value;
+  }),
+  removeItem: vi.fn((key: string) => {
+    delete store[key];
+  }),
+  clear: vi.fn(() => {
+    store = {};
+  }),
 };
 global.localStorage = localStorageMock as unknown as Storage;
+
+// Clear state before each test
+beforeEach(() => {
+  store = {};
+  resetMockApi();
+  vi.clearAllMocks();
+});
 
 // Mock requestAnimationFrame
 global.requestAnimationFrame = vi.fn((callback) => {

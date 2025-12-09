@@ -14,14 +14,24 @@ export const LeaderboardTable: React.FC<LeaderboardTableProps> = ({
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState<GameMode | 'all'>(filterMode);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchLeaderboard = async () => {
       setIsLoading(true);
+      setError(null);
       const mode = activeFilter === 'all' ? undefined : activeFilter;
       const response = await api.leaderboard.getLeaderboard(mode);
-      if (response.data) {
-        setEntries(response.data);
+      
+      if (response.success && response.data) {
+        // Mock API returns array directly in data, backend returns { entries: [] }
+        const leaderboardData = Array.isArray(response.data) 
+          ? response.data 
+          : (response.data as any).entries || [];
+        setEntries(leaderboardData);
+      } else {
+        setError(response.error || 'Failed to load leaderboard');
+        setEntries([]);
       }
       setIsLoading(false);
     };
@@ -84,6 +94,24 @@ export const LeaderboardTable: React.FC<LeaderboardTableProps> = ({
       {isLoading ? (
         <div className="flex justify-center py-8">
           <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      ) : error ? (
+        <div className="text-center py-8">
+          <p className="text-red-500 mb-4">{error}</p>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              setError(null);
+              setIsLoading(true);
+            }}
+          >
+            Try Again
+          </Button>
+        </div>
+      ) : entries.length === 0 ? (
+        <div className="text-center py-8 text-muted-foreground">
+          No leaderboard entries found
         </div>
       ) : (
         <div className="space-y-2">

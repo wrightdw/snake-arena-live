@@ -8,13 +8,24 @@ import { Loader2, Radio } from 'lucide-react';
 export const LivePlayersList: React.FC = () => {
   const [players, setPlayers] = useState<LivePlayer[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [watchingPlayerId, setWatchingPlayerId] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchPlayers = async () => {
+      setIsLoading(true);
+      setError(null);
       const response = await api.livePlayers.getLivePlayers();
-      if (response.data) {
-        setPlayers(response.data);
+      
+      if (response.success && response.data) {
+        // Mock API returns array directly in data, backend returns { players: [] }
+        const playersData = Array.isArray(response.data)
+          ? response.data
+          : (response.data as any).players || [];
+        setPlayers(playersData);
+      } else {
+        setError(response.error || 'Failed to load live players');
+        setPlayers([]);
       }
       setIsLoading(false);
     };
@@ -35,6 +46,14 @@ export const LivePlayersList: React.FC = () => {
     return (
       <div className="flex justify-center py-8">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-center py-8">
+        <p className="text-red-500 mb-4">{error}</p>
       </div>
     );
   }
